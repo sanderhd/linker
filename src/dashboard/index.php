@@ -30,7 +30,7 @@ $links = $links->fetchAll(PDO::FETCH_ASSOC);
 					
 					<div class="flex items-center gap-3">
 						<?php if (isset($_SESSION['user_id'])): ?>
-							<a href="profile"><span class="text-white/90 text-sm"><?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?></span></a>
+							<a href="profile.php"><span class="text-white/90 text-sm"><?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?></span></a>
 							<?php
 								$dashboardUrl = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') ? 'admin/index.php' : 'dashboard/index.php';
 							?>

@@ -3,7 +3,6 @@
 session_start();
 require_once '../functions/db_connection.php';
 
-// Get link ID from URL
 if (!isset($_GET['id'])) {
 	header('Location: index.php');
 	exit();
@@ -11,7 +10,6 @@ if (!isset($_GET['id'])) {
 
 $linkId = $_GET['id'];
 
-// Fetch link data
 $stmt = $conn->prepare("SELECT * FROM links WHERE id = ? AND owner_id = ?");
 $stmt->execute([$linkId, $_SESSION['user_id']]);
 $link = $stmt->fetch(PDO::FETCH_ASSOC);
