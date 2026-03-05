@@ -55,6 +55,7 @@ $links = $links->fetchAll(PDO::FETCH_ASSOC);
                 <tr>
                     <th scope="col" class="px-6 py-3 font-medium">Link name</th>
                     <th scope="col" class="px-6 py-3 font-medium">Link</th>
+					<th scope="col" class="px-6 py-3 font-medium">Owner</th>
                     <th scope="col" class="px-6 py-3 font-medium">Clicks</th>
                     <th scope="col" class="px-6 py-3 font-medium">Actions</th>
                 </tr>
@@ -68,6 +69,16 @@ $links = $links->fetchAll(PDO::FETCH_ASSOC);
 						   class="text-orange-500 hover:underline block truncate" 
 						   title="<?php echo htmlspecialchars($link['url']); ?>">
 							<?php echo htmlspecialchars($link['url']); ?>
+						</a>
+					</td>
+					<td class="px-6 py-4">
+						<a href="edit_user.php?id=<?php echo htmlspecialchars($link['owner_id']); ?>" class="text-orange-500 hover:underline">
+							<?php 
+							$user = $conn->prepare("SELECT username FROM users WHERE id = ?");
+							$user->execute([$link['owner_id']]);
+							$userData = $user->fetch(PDO::FETCH_ASSOC);
+							echo htmlspecialchars($userData['username'] ?? 'Unknown');
+							?>
 						</a>
 					</td>
 					<td class="px-6 py-4"><?php echo $link['clicks']; ?></td>

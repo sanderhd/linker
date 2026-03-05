@@ -7,7 +7,6 @@ if(!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'
 	exit();
 }
 
-// Fetch all users
 $users = $conn->prepare("SELECT * FROM users ORDER BY created_at DESC");
 $users->execute();
 $users = $users->fetchAll(PDO::FETCH_ASSOC);

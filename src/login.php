@@ -107,7 +107,7 @@ if(isset($_POST['login'])) {
 						/>
 					</div>
 					
-					<div class="mb-2">
+					<div class="mb-2 relative">
 						<label for="password" class="block mb-2 text-white font-semibold text-sm">Password:</label>
 						<input 
 							type="password" 
@@ -117,6 +117,10 @@ if(isset($_POST['login'])) {
 							class="bg-neutral-900 border border-white/20 rounded-lg px-4 py-2.5 w-full text-white text-sm placeholder-white/30 focus:outline-none focus:border-orange-500 transition" 
 							required 
 						/>
+
+						<button type="button" data-target="password" class="toggle-pass absolute right-3 top-10 text-white/40 hover:text-white transition">
+							<img src="assets/svg/eye.svg" class="w-5 h-5" />
+						</button>
 					</div>
 					
 					<div class="text-right mb-8">
@@ -143,5 +147,21 @@ if(isset($_POST['login'])) {
 				&copy; 2026 Link Tracker. All rights reserved.
 			</div>
 		</footer>
+
+		<script>
+			document.querySelectorAll('.toggle-pass').forEach(btn => {
+				btn.addEventListener('click', () => {
+					const targetId = btn.getAttribute('data-target');
+					const input    = document.getElementById(targetId);
+
+					const isHidden = input.type === 'password';
+					input.type     = isHidden ? 'text' : 'password';
+
+					btn.innerHTML = isHidden
+						? '<img src="assets/svg/eye-no.svg" class="w-5 h-5" />'
+						: '<img src="assets/svg/eye.svg" class="w-5 h-5" />';
+				});
+			});
+		</script>
 	</body>
 </html>
