@@ -1,0 +1,30 @@
+{
+  "name": "linker",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [
+    "php"
+  ],
+  "homepage": "https://github.com/sanderhd/linker#readme",
+  "bugs": {
+    "url": "https://github.com/sanderhd/linker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanderhd/linker.git"
+  },
+  "license": "ISC",
+  "author": "sanderhd",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx tailwindcss -i ./src/css/styles.css -o ./src/css/tailwind.css --watch",
+    "build": "npx tailwindcss -i ./src/css/styles.css -o ./src/css/tailwind.css --minify",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.7",
+    "postcss": "^8.4.27",
+    "autoprefixer": "^10.4.14"
+  }
+}
