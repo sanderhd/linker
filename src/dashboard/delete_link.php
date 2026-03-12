@@ -1,6 +1,8 @@
 <?php
 
-require_once '../functions/db_connection.php';
+require_once '../classes/Database.php';
+$database = new Database();
+$conn = $database->connect();
 session_start();
 
 $id = $_GET['id'] ?? null;

@@ -1,22 +1,29 @@
 <?php
+
+// Classes binnen halen
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+require_once 'classes/Validator.php';
 session_start();
-require_once 'functions/db_connection.php';
 
+// Aanmaken
+$database = new Database();
+$conn = $database->connect();
+$userModel = new User($conn);
+
+// Login form handleren
 if(isset($_POST['login'])) {
-	$username = $_POST['username'];
-	$password = $_POST['password'];
+	$username = Validator::sanitize($_POST['username'] ?? '');
+	$password = $_POST['password'] ?? '';
 
-	$stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
-	$stmt->execute([$username]);
+	$user = $userModel->verifyPassword($username, $password);
 
-	$user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-	if($user && password_verify($password, $user['password'])) {
+	if($user) {
 		$_SESSION['user_id'] = $user['id'];
 		$_SESSION['username'] = $user['username'];
-		$_SESSION['role'] = $user['role'];
+		$_SESSION['role'] = $user['role'] ?? 'user';
 
-		$dashboardUrl = ($user['role'] === 'admin') ? 'admin/index.php' : 'dashboard/index.php';
+		$dashboardUrl = ($_SESSION['role'] === 'admin') ? 'admin/index.php' : 'dashboard/index.php'; // sturen naar admin of normaal aan de hand vna de role
 		header("Location: $dashboardUrl");
 		exit();
 	} else {

@@ -1,6 +1,8 @@
 <?php
 session_start();
-require_once '../functions/db_connection.php';
+require_once '../classes/Database.php';
+$database = new Database();
+$conn = $database->connect();
 
 $links = $conn->prepare("SELECT l.*, COUNT(c.id) as clicks FROM links l LEFT JOIN clicks c ON l.id = c.link_id WHERE l.owner_id=? GROUP BY l.id");
 $links->execute([$_SESSION['user_id']]);

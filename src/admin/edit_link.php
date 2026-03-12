@@ -1,6 +1,9 @@
 <?php
 session_start();
-require_once '../functions/db_connection.php';
+require_once '../classes/Database.php';
+
+$database = new Database();
+$conn = $database->connect();
 
 if(!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 	header("Location: ../login.php");

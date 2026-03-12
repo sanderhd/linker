@@ -1,33 +1,43 @@
 <?php
-session_start();
-require_once 'functions/db_connection.php';
 
+// Classes binnen trekken
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+require_once 'classes/Validator.php';
+session_start();
+
+// Aanmaken
+$database = new Database();
+$conn = $database->connect();
+$userModel = new User($conn);
+
+// Register formulier uitvoeren
 if (isset($_POST['register'])) {
-    $username = $_POST['username'];
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+    $username = Validator::sanitize($_POST['username'] ?? '');
+    $email = Validator::sanitize($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
 
     if ($password !== $confirm_password) {
-        $notification = ['error' => 'Passwords do not match.'];
-
+        $notification = ['error' => 'Passwords do not match.']; // error
+    } elseif (!Validator::isEmail($email)) {
+        $notification = ['error' => 'Invalid e-mail address.']; // error
     } else {
-        $check = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
-        $check->execute([$username, $email]);
-
-        if ($check->rowCount() > 0) {
-            $notification = ['error' => 'Username or email already exists.'];
-
+        if ($userModel->getByUsername($username) || $userModel->getByEmail($email)) {
+            $notification = ['error' => 'Username or email already exists.']; // error
         } else {
-            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-            $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-            $success = $stmt->execute([$username, $email, $passwordHash]);
-
+            $success = $userModel->create($username, $email, $password);
             if ($success) {
-                $notification = ['success' => 'Registration successful! You can now log in.'];
+                $user = $userModel->getByEmail($email);
+
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['role'] = $user['role'] ?? 'user';
+                
+                header("Location: dashboard/index.php");
+                exit();
             } else {
-                $notification = ['error' => 'Something went wrong while creating your account.'];
+                $notification = ['error' => 'Something went wrong while creating your account.']; // error
             }
         }
     }
@@ -94,7 +104,6 @@ if (isset($_POST['register'])) {
                             $type    = key($notification);
                             $message = $notification[$type];
 
-                            // New improved colors
                             $bgColor     = $type === 'success' ? 'green-600/20' : 'red-600/20';
                             $borderColor = $type === 'success' ? 'green-600' : 'red-600';
                             $icon        = $type === 'success' ? 'assets/svg/success.svg' : 'assets/svg/error.svg';

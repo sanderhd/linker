@@ -1,6 +1,10 @@
 <?php
 session_start();
-require_once '../functions/db_connection.php';
+require_once '../classes/Database.php';
+require_once '../classes/Analytics.php';
+
+$database = new Database();
+$conn = $database->connect();
 
 $userId = $_SESSION['user_id'] ?? null;
 $id = $_GET['id'] ?? null;
@@ -24,111 +28,29 @@ if ($rangeDays !== null) {
 	$rangeStart->modify('-' . ($rangeDays - 1) . ' day');
 }
 
-$userLinks = [];
-if ($userId) {
-	$stmt = $conn->prepare("SELECT id, title FROM links WHERE owner_id = ? ORDER BY created_at DESC");
-	$stmt->execute([$userId]);
-	$userLinks = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-}
+$analytics = new Analytics($conn);
+
+$userLinks = $analytics->getUserLinks($userId);
 
 if (!$id && !empty($userLinks)) {
 	$id = $userLinks[0]['id'];
 }
 
-$link = null;
-if ($id && $userId) {
-	$stmt = $conn->prepare("SELECT * FROM links WHERE id = ? AND owner_id = ?");
-	$stmt->execute([$id, $userId]);
-	$link = $stmt->fetch(PDO::FETCH_ASSOC);
-}
+$link = $analytics->getLink($id, $userId);
 
-$clicks = [];
-if ($id) {
-	$clickQuery = "SELECT * FROM clicks WHERE link_id = ?";
-	$clickParams = [$id];
-	if ($rangeStart) {
-		$clickQuery .= " AND date >= ?";
-		$clickParams[] = $rangeStart->format('Y-m-d 00:00:00');
-	}
-	$clickQuery .= " ORDER BY date ASC";
-	$stmt = $conn->prepare($clickQuery);
-	$stmt->execute($clickParams);
-	$clicks = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-}
+$clicks = $analytics->getClicks($id, $rangeStart);
 
-$totalClicks = count($clicks);
-$clickCounts = [];
-foreach ($clicks as $click) {
-	$clickedAt = $click['date'] ?? $click['clicked_at'] ?? null;
-	if (!$clickedAt) {
-		continue;
-	}
-	$bucket = date('Y-m-d', strtotime($clickedAt));
-	$clickCounts[$bucket] = ($clickCounts[$bucket] ?? 0) + 1;
-}
-
-if (!empty($clickCounts)) {
-	ksort($clickCounts);
-	$dates = array_keys($clickCounts);
-	$start = $rangeStart ? clone $rangeStart : new DateTime(reset($dates));
-	$end = new DateTime('today');
-	if ($end < $start) {
-		$end = new DateTime(end($dates));
-	}
-	$end->modify('+1 day');
-
-	$period = new DatePeriod($start, new DateInterval('P1D'), $end);
-	$filledCounts = [];
-	foreach ($period as $date) {
-		$label = $date->format('Y-m-d');
-		$filledCounts[$label] = $clickCounts[$label] ?? 0;
-	}
-	$clickCounts = $filledCounts;
-}
-
+$clickCounts = $analytics->getClickCountsPerDay($clicks, $rangeStart);
 $clickLabels = array_keys($clickCounts);
 $clickData = array_values($clickCounts);
 
-$topOs = [];
-$topLocations = [];
-$topDevices = [];
+$topOs = $analytics->getTop($id, $rangeStart, 'operating_system');
+$topLocations = $analytics->getTop($id, $rangeStart, 'location');
+$topDevices = $analytics->getTop($id, $rangeStart, 'device');
 
-$rangeSql = $rangeStart ? " AND date >= ?" : "";
-$rangeParams = $rangeStart ? [$rangeStart->format('Y-m-d 00:00:00')] : [];
+$totalClicks = count($clicks);
+list($trendPercent, $trendDirection) = $analytics->getTrend($id);
 
-if ($id) {
-	$stmt = $conn->prepare("SELECT operating_system AS label, COUNT(*) AS total FROM clicks WHERE link_id = ?" . $rangeSql . " AND operating_system IS NOT NULL AND operating_system <> '' GROUP BY operating_system ORDER BY total DESC LIMIT 3");
-	$stmt->execute(array_merge([$id], $rangeParams));
-	$topOs = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-	$stmt = $conn->prepare("SELECT location AS label, COUNT(*) AS total FROM clicks WHERE link_id = ?" . $rangeSql . " AND location IS NOT NULL AND location <> '' GROUP BY location ORDER BY total DESC LIMIT 3");
-	$stmt->execute(array_merge([$id], $rangeParams));
-	$topLocations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-	$stmt = $conn->prepare("SELECT device AS label, COUNT(*) AS total FROM clicks WHERE link_id = ?" . $rangeSql . " AND device IS NOT NULL AND device <> '' GROUP BY device ORDER BY total DESC LIMIT 3");
-	$stmt->execute(array_merge([$id], $rangeParams));
-	$topDevices = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-}
-
-$trendPercent = null;
-$trendDirection = null;
-if ($id) {
-	$stmt = $conn->prepare("SELECT COUNT(*) FROM clicks WHERE link_id = ? AND date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
-	$stmt->execute([$id]);
-	$last7 = (int) $stmt->fetchColumn();
-
-	$stmt = $conn->prepare("SELECT COUNT(*) FROM clicks WHERE link_id = ? AND date >= DATE_SUB(CURDATE(), INTERVAL 14 DAY) AND date < DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
-	$stmt->execute([$id]);
-	$prev7 = (int) $stmt->fetchColumn();
-
-	if ($prev7 > 0) {
-		$trendPercent = round((($last7 - $prev7) / $prev7) * 100);
-		$trendDirection = $trendPercent >= 0 ? 'up' : 'down';
-	} elseif ($last7 > 0) {
-		$trendPercent = 100;
-		$trendDirection = 'up';
-	}
-}
 
 ?>
 
