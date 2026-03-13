@@ -1,9 +1,12 @@
 <?php
+
+//database connecten
 session_start();
 require_once '../classes/Database.php';
 $database = new Database();
 $conn = $database->connect();
 
+// alle links van de gebruiker ophalen
 $links = $conn->prepare("SELECT l.*, COUNT(c.id) as clicks FROM links l LEFT JOIN clicks c ON l.id = c.link_id WHERE l.owner_id=? GROUP BY l.id");
 $links->execute([$_SESSION['user_id']]);
 $links = $links->fetchAll(PDO::FETCH_ASSOC);

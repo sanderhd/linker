@@ -1,5 +1,6 @@
 <?php
 
+// database connecten
 session_start();
 require_once '../classes/Database.php';
 $database = new Database();
@@ -10,12 +11,14 @@ if (!isset($_GET['id'])) {
 	exit();
 }
 
+// link ophalen en checken of de eigenaar is
 $linkId = $_GET['id'];
 
 $stmt = $conn->prepare("SELECT * FROM links WHERE id = ? AND owner_id = ?");
 $stmt->execute([$linkId, $_SESSION['user_id']]);
 $link = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// als er geen link is naar index
 if (!$link) {
 	header('Location: index.php');
 	exit();
@@ -133,13 +136,16 @@ if (!$link) {
 		</footer>
 
 		<script>
+			// form handler voor link update
 			document.getElementById('editForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 				
+				// input lezen
 				const title = document.getElementById('title').value;
 				const url = document.getElementById('url').value;
 				const linkId = <?php echo $linkId; ?>;
 				
+				// data naar api sturen
 				try {
 					const response = await fetch('../api/links.php?id=' + linkId, {
 						method: 'PUT',
@@ -152,13 +158,13 @@ if (!$link) {
 					const result = await response.json();
 					
 					if (response.ok) {
-						alert('Link updated successfully!');
+						alert('Link updated successfully!'); // succesmelding
 						window.location.href = 'index.php';
 					} else {
-						alert('Error: ' + result.message);
+						alert('Error: ' + result.message); // API foutmelding
 					}
 				} catch (error) {
-					alert('An error occurred: ' + error.message);
+					alert('An error occurred: ' + error.message); // andere onverklaarbare fout
 				}
 			});
 		</script>

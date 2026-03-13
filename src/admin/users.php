@@ -2,14 +2,17 @@
 session_start();
 require_once '../classes/Database.php';
 
+// database connecten
 $database = new Database();
 $conn = $database->connect();
 
+// controleren of admin is
 if(!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 	header("Location: ../login.php");
 	exit();
 }
 
+// users ophalen
 $users = $conn->prepare("SELECT * FROM users ORDER BY created_at DESC");
 $users->execute();
 $users = $users->fetchAll(PDO::FETCH_ASSOC);

@@ -3,13 +3,16 @@ session_start();
 require_once '../classes/Database.php';
 require_once '../classes/Analytics.php';
 
+// database connecten
 $database = new Database();
 $conn = $database->connect();
 
+// user id en link id uit url halen
 $userId = $_SESSION['user_id'] ?? null;
 $id = $_GET['id'] ?? null;
 $rangeKey = $_GET['range'] ?? '30d';
 
+// range opties
 $rangeOptions = [
 	'7d' => ['label' => 'Last 7 days', 'days' => 7],
 	'30d' => ['label' => 'Last 30 days', 'days' => 30],
@@ -17,10 +20,12 @@ $rangeOptions = [
 	'all' => ['label' => 'All time', 'days' => null],
 ];
 
+// valideer range key
 if (!isset($rangeOptions[$rangeKey])) {
 	$rangeKey = '30d';
 }
 
+// bereken start datum op basis van range
 $rangeDays = $rangeOptions[$rangeKey]['days'];
 $rangeStart = null;
 if ($rangeDays !== null) {
@@ -30,27 +35,31 @@ if ($rangeDays !== null) {
 
 $analytics = new Analytics($conn);
 
+// pak alle links van de user
 $userLinks = $analytics->getUserLinks($userId);
 
 if (!$id && !empty($userLinks)) {
 	$id = $userLinks[0]['id'];
 }
 
+// haal link info op
 $link = $analytics->getLink($id, $userId);
 
+// pak alle clicks van de link binnen de range
 $clicks = $analytics->getClicks($id, $rangeStart);
 
+// bereken clicks per dag voor de chart
 $clickCounts = $analytics->getClickCountsPerDay($clicks, $rangeStart);
 $clickLabels = array_keys($clickCounts);
 $clickData = array_values($clickCounts);
 
+// haal top browsers, os, locaties en devices op
 $topOs = $analytics->getTop($id, $rangeStart, 'operating_system');
 $topLocations = $analytics->getTop($id, $rangeStart, 'location');
 $topDevices = $analytics->getTop($id, $rangeStart, 'device');
-
 $totalClicks = count($clicks);
-list($trendPercent, $trendDirection) = $analytics->getTrend($id);
 
+list($trendPercent, $trendDirection) = $analytics->getTrend($id);
 
 ?>
 
@@ -201,6 +210,7 @@ list($trendPercent, $trendDirection) = $analytics->getTrend($id);
 
 		<?php if ($totalClicks > 0): ?>
 			<script>
+				// clicks renderen in de grafiek
 				const ctx = document.getElementById('clicksChart');
 				const clicksLabels = <?php echo json_encode($clickLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
 				const clicksData = <?php echo json_encode($clickData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;

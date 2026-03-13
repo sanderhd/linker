@@ -3,18 +3,23 @@
 session_start();
 header("Content-Type: application/json");
 
+// Classes  binnenhalen
 require_once "../classes/Database.php";
 require_once "../classes/Link.php";
 require_once "../classes/Validator.php";
 
+// database connecten
 $database = new Database();
 $db = $database->connect();
 
+// link class maken
 $link = new Link($db);
 
+// http method en input ophalen
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents("php://input"), true);
 
+// switch case voor verschillende http methods
 switch ($method) {
     case 'GET':
         if(isset($_GET['id'])) {

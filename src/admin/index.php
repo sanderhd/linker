@@ -2,14 +2,17 @@
 session_start();
 require_once '../classes/Database.php';
 
+// database connecten
 $database = new Database();
 $conn = $database->connect();
 
+// controleren of admin is
 if(!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 	header("Location: ../login.php");
 	exit();
 }
 
+// links ophalen
 $links = $conn->prepare("SELECT l.*, COUNT(c.id) as clicks FROM links l LEFT JOIN clicks c ON l.id = c.link_id GROUP BY l.id ORDER BY l.created_at DESC");
 $links->execute();
 $links = $links->fetchAll(PDO::FETCH_ASSOC);

@@ -2,6 +2,7 @@
 session_start();
 require_once 'classes/Database.php';
 
+// database connecten
 $database = new Database();
 $conn = $database->connect();
 ?>

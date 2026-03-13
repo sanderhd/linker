@@ -1,9 +1,12 @@
 <?php
+
+// database connecten
 session_start();
 require_once 'classes/Database.php';
 $database = new Database();
 $conn = $database->connect();
 
+// top links ophalen
 $sql = "SELECT 
             l.id,
             l.title,

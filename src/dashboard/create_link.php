@@ -1,6 +1,7 @@
 <?php
-
 session_start();
+
+// database connecten
 require_once '../classes/Database.php';
 $database = new Database();
 $conn = $database->connect();
@@ -28,6 +29,7 @@ $conn = $database->connect();
 					<a href="/links" class="absolute left-1/2 transform -translate-x-1/2 text-white/90 font-medium pointer-events-auto hover:underline hover:text-orange-500 transition">Links</a>
 					
 					<div class="flex items-center gap-3">
+						<?php // als ingelogd dit laten zien ?>
 						<?php if (isset($_SESSION['user_id'])): ?>
 							<a href="profile"><span class="text-white/90 text-sm"><?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?></span></a>
 							<?php
@@ -109,13 +111,16 @@ $conn = $database->connect();
 		</footer>
 
 		<script>
+			// form handler voor link creatie
 			document.querySelector('form').addEventListener('submit', async function(e) {
-				e.preventDefault();
+				e.preventDefault(); // voorkom standaard form submit 
 				
+				// input lezen
 				const title = document.getElementById('title').value;
 				const url = document.getElementById('url').value;
 				
 				try {
+					// data naar api sturen
 					const response = await fetch('../api/links.php', {
 						method: 'POST',
 						headers: {
@@ -127,12 +132,15 @@ $conn = $database->connect();
 					const result = await response.json();
 					
 					if (response.ok) {
+						// link maken gelukt
 						alert('Link created successfully! Short URL: ' + window.location.origin + '/l/' + result.short_id);
 						window.location.href = 'index.php';
 					} else {
+						// api fout 
 						alert('Error: ' + result.message);
 					}
 				} catch (error) {
+					// andere rare fout
 					alert('An error occurred: ' + error.message);
 				}
 			});

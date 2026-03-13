@@ -2,32 +2,39 @@
 session_start();
 require_once '../classes/Database.php';
 
+// database connecten
 $database = new Database();
 $conn = $database->connect();
 
+// controleren of admin is
 if(!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 	header("Location: ../login.php");
 	exit();
 }
 
+// id uit url halen
 $id = $_GET['id'] ?? null;
 $error = '';
 $success = '';
 
+// naar index sturen als er geen id is
 if (!$id) {
 	header("Location: index.php");
 	exit();
 }
 
+// link ophalen
 $stmt = $conn->prepare("SELECT * FROM links WHERE id = ?");
 $stmt->execute([$id]);
 $link = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// als er geen link is terug naar index
 if (!$link) {
 	header("Location: index.php");
 	exit();
 }
 
+// form verwerken
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$title = $_POST['title'] ?? '';
 	$url = $_POST['url'] ?? '';
